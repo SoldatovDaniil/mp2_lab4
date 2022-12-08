@@ -200,14 +200,136 @@ public:
 	{
 		return data.size();
 	}
+};
 
-	friend ostream& operator<<(ostream& out, const Expression& expr)
+
+class Calculator : private Expression
+{
+private:
+	Expression express;
+	vector<pair<string, priority>> polish;
+public:
+	Calculator(const Expression& expr)
 	{
-		for (int i = 0; i < expr.data.size(); i++)
+		express = expr;
+		if (express.check() == false)
 		{
+			throw ("Error: wrong expression");
 		}
-		return out;
 	}
 
+	vector<pair<string, priority>> getPolish()
+	{
+		stack<pair<string, priority>> tmpStack;
+		for (int i = 0; i < express.data.size(); i++)
+		{
+			if (express.data[i].second == priority::number)
+			{
+				polish.push_back(make_pair(express.data[i].first, express.data[i].second));
+			}
+			else if (express.data[i].first == "(")
+			{
+				tmpStack.push(make_pair(express.data[i].first, express.data[i].second));
+			}
+			else if (express.data[i].first == ")")
+			{
+				while (tmpStack.top().first != "(")
+				{
+					polish.push_back(make_pair(tmpStack.top().first, tmpStack.top().second));
+					tmpStack.pop();
+				}
+				tmpStack.pop();
+			}
+			else if (express.data[i].second == priority::add_or_sub)
+			{
+				if (tmpStack.empty())
+				{
+					tmpStack.push(make_pair(express.data[i].first, express.data[i].second));
+				}
+				else if (tmpStack.top().first == "+" || tmpStack.top().first == "-" || tmpStack.top().first == "/" || tmpStack.top().first == "*")
+				{
+					if ((express.data[i].first == "-") && (express.data[i + 1].second == priority::number))
+					{
+						polish.push_back(make_pair(express.data[i + 1].first, express.data[i + 1].second));
+						i++;
+					}
+					else
+					{
+						polish.push_back(tmpStack.top());
+						tmpStack.pop();
+						tmpStack.push(make_pair(express.data[i].first, express.data[i].second));
+					}
+				}
+			}
+			else if (express.data[i].second == priority::div_or_mul)
+			{
+				if (tmpStack.empty())
+				{						
+					tmpStack.push(make_pair(express.data[i].first, express.data[i].second));
+				}
+				else if (tmpStack.top().first == "*" || tmpStack.top().first == "/")
+				{
+					polish.push_back(tmpStack.top());
+					tmpStack.pop();
+					tmpStack.push(make_pair(express.data[i].first, express.data[i].second));
+				}
+				else
+				{
+					tmpStack.push(make_pair(express.data[i].first, express.data[i].second));
+				}
+			}
+		}
+
+		while (!tmpStack.empty())
+		{
+			if (tmpStack.top().first == "(" || tmpStack.top().first == ")")
+			{
+				tmpStack.top();
+			}
+			else
+			{
+				polish.push_back(tmpStack.top());
+				tmpStack.pop();
+			}
+		}
+
+		return polish;
+	}
+
+	string perform() 
+	{	
+		stack<pair<string, priority>> tmpStack;
+		for (int i = 0; i < polish.size(); i++) 
+		{
+			if (polish[i].second == priority::number) 
+			{
+				tmpStack.push(polish[i]);
+			}
+			else
+			{
+				int left = stoi(tmpStack.top().first);
+				tmpStack.pop();
+				int right = stoi(tmpStack.top().first);
+				tmpStack.pop();
+				if (polish[i].first == "+")
+				{
+					tmpStack.push(make_pair(to_string(left + right), priority::add_or_sub));
+				}
+				else if (polish[i].first == "-")
+				{
+					tmpStack.push(make_pair(to_string(left - right), priority::add_or_sub));
+				}
+				else if (polish[i].first == "*")
+				{
+					tmpStack.push(make_pair(to_string(left * right), priority::div_or_mul));
+				}
+				else if (polish[i].first == "/")
+				{
+					tmpStack.push(make_pair(to_string(left / right), priority::div_or_mul));
+				}
+			}
+		}
+		return tmpStack.top().first;
+	}
 };
 
