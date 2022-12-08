@@ -22,10 +22,8 @@ public:
 		erorr,
 		w_operator,
 		w_number,
-		w_open_bracket,
-		w_close_bracket,
-		w_operator_or_bracket,
-		w_number_or_bracket
+		w_operator_or_close_bracket,
+		w_number_or_open_bracket
 	};
 
 	vector<pair<string, priority>> data;
@@ -34,9 +32,9 @@ public:
 	
 	Expression(const string& str)
 	{
-		pair<string, priority> tmp;
 		for (int i = 0; i < str.size(); i++)
 		{
+			pair<string, priority> tmp;
 			tmp.first = "";
 			if (str[i] == '+' || str[i] == '-')
 			{
@@ -56,14 +54,16 @@ public:
 				tmp.second = priority::brecket;
 				data.push_back(tmp);
 			}
-			else if ((str[i] >= 49) && (str[i] <= 57))
+			else if ((str[i] >= 48) && (str[i] <= 57))
 			{
-				tmp.second = priority::brecket;
-				while (((str[i] >= 49) && (str[i] <= 57)) && i < str.size())
+				tmp.second = priority::number;
+				do
 				{
 					tmp.first += str[i];
 					i++;
-				}
+				} while (((str[i] >= 48) && (str[i] <= 57)) && i < str.size());
+				i--;
+				data.push_back(tmp);
 			}
 			else
 			{
@@ -98,22 +98,18 @@ public:
 				}
 				else if (data[i].second == priority::number)
 				{
-					status = statusCheck::w_operator_or_bracket;
+					status = statusCheck::w_operator;
 				}
 				else if (data[i].first == "(") 
 				{
 					status = statusCheck::w_number;
 					breck_count++;
 				}
-				else if (data[i].second == priority::number)
-				{
-					status = statusCheck::w_operator_or_bracket;
-				}
 				break;
 			case Expression::statusCheck::w_number:
 				if (data[i].second == priority::number)
 				{
-					status = statusCheck::w_operator_or_bracket; 
+					status = statusCheck::w_operator_or_close_bracket; 
 				}
 				else
 				{
@@ -123,41 +119,19 @@ public:
 			case Expression::statusCheck::w_operator:
 				if (data[i].second == priority::div_or_mul || data[i].second == priority::add_or_sub)
 				{
-					status = statusCheck::w_number_or_bracket;
+					status = statusCheck::w_number_or_open_bracket;
 				}
 				else
 				{
 					status = statusCheck::erorr;
 				}
 				break;
-			case Expression::statusCheck::w_open_bracket:
-				if (data[i].first == "(")
-				{
-					status = statusCheck::w_number;
-					breck_count++;
-				}
-				else
-				{
-					status = statusCheck::erorr;
-				}
-				break;
-			case Expression::statusCheck::w_close_bracket:
-				if (data[i].first == ")")
-				{
-					status = statusCheck::w_operator;
-					breck_count--;
-				}
-				else
-				{
-					status = statusCheck::erorr;
-				}
-				break;
-			case Expression::statusCheck::w_number_or_bracket:
+			case Expression::statusCheck::w_number_or_open_bracket:
 				if (data[i].second == priority::number)
 				{
-					status = statusCheck::w_operator_or_bracket; 
+					status = statusCheck::w_operator_or_close_bracket; 
 				}
-				else if (data[i].second == priority::brecket)
+				else if (data[i].first == "(")
 				{
 					status = statusCheck::w_number;
 					breck_count++;
@@ -167,15 +141,15 @@ public:
 					status = statusCheck::erorr;
 				}
 				break;
-			case Expression::statusCheck::w_operator_or_bracket:
-				if (data[i].second == priority::brecket)
+			case Expression::statusCheck::w_operator_or_close_bracket:
+				if (data[i].first == ")")
 				{
 					status = statusCheck::w_operator;
 					breck_count--;
 				}
 				else if (data[i].second == priority::add_or_sub || data[i].second == priority::div_or_mul)
 				{
-					status = statusCheck::w_number_or_bracket;
+					status = statusCheck::w_number_or_open_bracket;
 				}
 				else
 				{
@@ -184,6 +158,7 @@ public:
 				break;
 			case Expression::statusCheck::erorr:
 				return false;
+				break;
 			default:
 				break;
 			}
@@ -200,6 +175,18 @@ public:
 	{
 		return data.size();
 	}
+
+	friend ostream& operator<<(ostream& out, const Expression& expres)
+	{
+		cout << "\nExpression: \n";
+		for (int i = 0; i < expres.data.size(); i++) 
+		{
+			pair<string, priority> tmp = expres.data[i];
+			out << tmp.first;
+		}
+		return out;
+	}
+
 };
 
 
@@ -325,11 +312,31 @@ public:
 				}
 				else if (polish[i].first == "/")
 				{
-					tmpStack.push(make_pair(to_string(left / right), priority::div_or_mul));
+					if (left == 0)
+					{
+						throw ("Error: Division by zero");
+					}
+					tmpStack.push(make_pair(to_string(right / left), priority::div_or_mul));
 				}
 			}
 		}
 		return tmpStack.top().first;
+	}
+
+	string polishToString() 
+	{
+		string tmp = "";
+		for (int i = 0; i < polish.size(); i++)
+			tmp += polish[i].first;
+		return tmp;
+	}
+
+	void printPolish() {
+		cout << "\nPolish of this expression: \n";
+		for (int i = 0; i < polish.size(); i++)
+		{
+			cout << polish[i].first;
+		}
 	}
 };
 
