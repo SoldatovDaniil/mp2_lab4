@@ -10,7 +10,7 @@ class Expression
 public:
 	enum class priority
 	{
-		number, 
+		number,
 		brecket,
 		div_or_mul,
 		add_or_sub
@@ -26,10 +26,56 @@ public:
 		w_number_or_open_bracket
 	};
 
+	enum class nstatusCheck
+	{
+		erorr,
+		w_number,
+		w_number_or_point,
+		w_number_a_point
+	};
+
+	bool checkDoubValue(const string& num)
+	{
+		nstatusCheck status = nstatusCheck::w_number;
+		for (int i = 0; i <= num.size(); i++)
+		{
+			switch (status)
+			{
+			case nstatusCheck::erorr:
+				return false;
+			case nstatusCheck::w_number:
+				if (num[i] == '.')
+				{
+					status = nstatusCheck::erorr;
+				}
+				else
+				{
+					status = nstatusCheck::w_number_or_point;
+				}
+				break;
+			case nstatusCheck::w_number_or_point:
+				if (num[i] == '.')
+				{
+					status = nstatusCheck::w_number_a_point;
+				}
+				break;
+			case nstatusCheck::w_number_a_point:
+				if (num[i] == '.')
+				{
+					status = nstatusCheck::erorr;
+				}
+				break;
+			default:
+				break;
+			}
+		}
+		return true;
+	}
+
 	vector<pair<string, priority>> data;
 
 	Expression() = default;
-	
+
 	Expression(const string& str)
 	{
 		for (int i = 0; i < str.size(); i++)
@@ -54,20 +100,27 @@ public:
 				tmp.second = priority::brecket;
 				data.push_back(tmp);
 			}
-			else if ((str[i] >= 48) && (str[i] <= 57))
+			else if (((str[i] >= 48) && (str[i] <= 57)) || str[i] == '.')
 			{
 				tmp.second = priority::number;
 				do
 				{
 					tmp.first += str[i];
 					i++;
-				} while (((str[i] >= 48) && (str[i] <= 57)) && i < str.size());
-				i--;
-				data.push_back(tmp);
+				} while ((((str[i] >= 48) && (str[i] <= 57)) || str[i] == '.') && i < str.size());
+				if (checkDoubValue(tmp.first) == true)
+				{
+					data.push_back(tmp);
+					i--;
+				}
+				else
+				{
+					throw ("Error: wrong real number!");
+				}
 			}
 			else
 			{
-				throw ("Error: unidentified symbol");
+				throw ("Error: unidentified symbol!");
 			}
 		}
 	}
@@ -87,7 +140,7 @@ public:
 	{
 		statusCheck status = statusCheck::start;
 		int breck_count = 0;
-		for (int i = 0; i < data.size(); i++)
+		for (int i = 0; i < data.size(); ++i)
 		{
 			switch (status)
 			{
@@ -100,7 +153,7 @@ public:
 				{
 					status = statusCheck::w_operator;
 				}
-				else if (data[i].first == "(") 
+				else if (data[i].first == "(")
 				{
 					status = statusCheck::w_number;
 					breck_count++;
@@ -109,7 +162,7 @@ public:
 			case Expression::statusCheck::w_number:
 				if (data[i].second == priority::number)
 				{
-					status = statusCheck::w_operator_or_close_bracket; 
+					status = statusCheck::w_operator_or_close_bracket;
 				}
 				else
 				{
@@ -129,7 +182,7 @@ public:
 			case Expression::statusCheck::w_number_or_open_bracket:
 				if (data[i].second == priority::number)
 				{
-					status = statusCheck::w_operator_or_close_bracket; 
+					status = statusCheck::w_operator_or_close_bracket;
 				}
 				else if (data[i].first == "(")
 				{
@@ -158,12 +211,19 @@ public:
 				break;
 			case Expression::statusCheck::erorr:
 				return false;
-				break;
 			default:
 				break;
 			}
 		}
 
+		if (status == statusCheck::erorr)
+		{
+			return false;
+		}
+		if (status == statusCheck::w_number_or_open_bracket)
+		{
+			return false;
+		}
 		if (breck_count == 0)
 		{
 			return true;
@@ -171,7 +231,7 @@ public:
 		return false;
 	}
 
-	int size() 
+	int size()
 	{
 		return data.size();
 	}
@@ -179,7 +239,7 @@ public:
 	friend ostream& operator<<(ostream& out, const Expression& expres)
 	{
 		cout << "\nExpression: \n";
-		for (int i = 0; i < expres.data.size(); i++) 
+		for (int i = 0; i < expres.data.size(); i++)
 		{
 			pair<string, priority> tmp = expres.data[i];
 			out << tmp.first;
@@ -212,118 +272,94 @@ public:
 		{
 			if (express.data[i].second == priority::number)
 			{
-				polish.push_back(make_pair(express.data[i].first, express.data[i].second));
+				polish.push_back(express.data[i]);
 			}
 			else if (express.data[i].first == "(")
 			{
-				tmpStack.push(make_pair(express.data[i].first, express.data[i].second));
+				tmpStack.push(express.data[i]);
 			}
 			else if (express.data[i].first == ")")
 			{
 				while (tmpStack.top().first != "(")
 				{
-					polish.push_back(make_pair(tmpStack.top().first, tmpStack.top().second));
+					polish.push_back(tmpStack.top());
 					tmpStack.pop();
 				}
 				tmpStack.pop();
 			}
-			else if (express.data[i].second == priority::add_or_sub)
+			else if (express.data[i].second == priority::add_or_sub || express.data[i].second == priority::div_or_mul)
 			{
-				if (tmpStack.empty())
-				{
-					tmpStack.push(make_pair(express.data[i].first, express.data[i].second));
-				}
-				else if (tmpStack.top().first == "+" || tmpStack.top().first == "-" || tmpStack.top().first == "/" || tmpStack.top().first == "*")
-				{
-					if ((express.data[i].first == "-") && (express.data[i + 1].second == priority::number))
-					{
-						polish.push_back(make_pair(express.data[i + 1].first, express.data[i + 1].second));
-						i++;
-					}
-					else
-					{
-						polish.push_back(tmpStack.top());
-						tmpStack.pop();
-						tmpStack.push(make_pair(express.data[i].first, express.data[i].second));
-					}
-				}
-			}
-			else if (express.data[i].second == priority::div_or_mul)
-			{
-				if (tmpStack.empty())
-				{						
-					tmpStack.push(make_pair(express.data[i].first, express.data[i].second));
-				}
-				else if (tmpStack.top().first == "*" || tmpStack.top().first == "/")
+				while (!tmpStack.empty() && ((express.data[i].second == priority::add_or_sub && (tmpStack.top().second == priority::add_or_sub || tmpStack.top().second == priority::div_or_mul)) || (express.data[i].second == priority::div_or_mul && tmpStack.top().second == priority::div_or_mul)))
 				{
 					polish.push_back(tmpStack.top());
 					tmpStack.pop();
-					tmpStack.push(make_pair(express.data[i].first, express.data[i].second));
 				}
-				else
-				{
-					tmpStack.push(make_pair(express.data[i].first, express.data[i].second));
-				}
+				tmpStack.push(express.data[i]);
 			}
 		}
 
 		while (!tmpStack.empty())
 		{
-			if (tmpStack.top().first == "(" || tmpStack.top().first == ")")
-			{
-				tmpStack.top();
-			}
-			else
-			{
-				polish.push_back(tmpStack.top());
-				tmpStack.pop();
-			}
+			polish.push_back(tmpStack.top());
+			tmpStack.pop();
 		}
 
 		return polish;
 	}
 
-	string perform() 
-	{	
+	string perform()
+	{
 		stack<pair<string, priority>> tmpStack;
-		for (int i = 0; i < polish.size(); i++) 
+		for (int i = 0; i < polish.size(); i++)
 		{
-			if (polish[i].second == priority::number) 
+			if (polish[i].second == priority::number)
 			{
 				tmpStack.push(polish[i]);
 			}
-			else
+			else if (polish[i].second == priority::add_or_sub || polish[i].second == priority::div_or_mul)
 			{
-				int left = stoi(tmpStack.top().first);
-				tmpStack.pop();
-				int right = stoi(tmpStack.top().first);
-				tmpStack.pop();
 				if (polish[i].first == "+")
 				{
-					tmpStack.push(make_pair(to_string(left + right), priority::add_or_sub));
+					double rOper = stod(tmpStack.top().first);
+					tmpStack.pop();
+					double lOper = stod(tmpStack.top().first);
+					tmpStack.pop();
+					tmpStack.push(make_pair(to_string(lOper + rOper), priority::add_or_sub));
 				}
 				else if (polish[i].first == "-")
 				{
-					tmpStack.push(make_pair(to_string(left - right), priority::add_or_sub));
+					double rOper = stod(tmpStack.top().first);
+					tmpStack.pop();
+					double lOper = stod(tmpStack.top().first);
+					tmpStack.pop();
+					tmpStack.push(make_pair(to_string(lOper - rOper), priority::add_or_sub));
 				}
 				else if (polish[i].first == "*")
 				{
-					tmpStack.push(make_pair(to_string(left * right), priority::div_or_mul));
+					double rOper = stod(tmpStack.top().first);
+					tmpStack.pop();
+					double lOper = stod(tmpStack.top().first);
+					tmpStack.pop();
+					tmpStack.push(make_pair(to_string(lOper * rOper), priority::add_or_sub));
 				}
 				else if (polish[i].first == "/")
 				{
-					if (left == 0)
+					double rOper = stod(tmpStack.top().first);
+					tmpStack.pop();
+					double lOper = stod(tmpStack.top().first);
+					tmpStack.pop();
+					if (rOper == 0)
 					{
-						throw ("Error: Division by zero");
+						throw ("Error: division by zero!!!");
 					}
-					tmpStack.push(make_pair(to_string(right / left), priority::div_or_mul));
+					tmpStack.push(make_pair(to_string(lOper / rOper), priority::add_or_sub));
 				}
 			}
 		}
 		return tmpStack.top().first;
 	}
 
-	string polishToString() 
+	string polishToString()
 	{
 		string tmp = "";
 		for (int i = 0; i < polish.size(); i++)
@@ -339,4 +375,24 @@ public:
 		}
 	}
 };
+
+string GetAnswer(const Expression& expr)
+{
+	Calculator calc(expr);
+	calc.getPolish();
+	return(calc.perform());
+}
+
+Expression GetExpr()
+{
+	string str;
+	cout << "Input your expression: ";
+	cin >> str;
+	Expression expr(str);
+	return expr;
+}
+
+
+
+
 

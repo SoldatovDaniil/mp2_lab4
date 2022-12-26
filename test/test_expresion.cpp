@@ -35,9 +35,33 @@ TEST(Expressions, can_check_return_true)
 	EXPECT_EQ(true, exp.check());
 }
 
-TEST(Expressions, can_check_return_false)
+TEST(Expressions, can_check_return_false1)
 {
 	Expression exp("1+)3");
+	EXPECT_EQ(false, exp.check());
+}
+
+TEST(Expressions, can_check_return_false2)
+{
+	Expression exp("1+3)");
+	EXPECT_EQ(false, exp.check());
+}
+
+TEST(Expressions, can_check_return_false3)
+{
+	Expression exp("1++3");
+	EXPECT_EQ(false, exp.check());
+}
+
+TEST(Expressions, can_check_return_false4)
+{
+	Expression exp("1+3(2+3)");
+	EXPECT_EQ(false, exp.check());
+}
+
+TEST(Expressions, can_check_return_false5)
+{
+	Expression exp("1-");
 	EXPECT_EQ(false, exp.check());
 }
 
@@ -69,9 +93,16 @@ TEST(Expressions, can_throw_except_when_div_by_zero)
 
 TEST(Expressions, can_calculated) {
 
-	Expression exp("1+9/3");
+	Expression exp("1+9/3+12*(4-3)");
 	Calculator calc(exp);
 	calc.getPolish();
-	cout << calc.perform();
-	EXPECT_EQ(calc.perform(), "4");
+	EXPECT_EQ(calc.perform(), "16.000000");
+}
+
+TEST(Expressions, can_calculated_double) {
+
+	Expression exp("2.5+3.23");
+	Calculator calc(exp);
+	calc.getPolish();
+	EXPECT_EQ(calc.perform(), "5.730000");
 }
