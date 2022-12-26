@@ -96,7 +96,6 @@ TEST(Expressions, can_calculated) {
 	Expression exp("1+9/3+12*(4-3)");
 	Calculator calc(exp);
 	calc.getPolish();
-	cout << calc.perform();
 	EXPECT_EQ(calc.perform(), "16.000000");
 }
 
@@ -105,6 +104,5 @@ TEST(Expressions, can_calculated_double) {
 	Expression exp("2.5+3.23");
 	Calculator calc(exp);
 	calc.getPolish();
-	cout << calc.perform();
 	EXPECT_EQ(calc.perform(), "5.730000");
 }

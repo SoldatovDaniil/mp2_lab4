@@ -1,14 +1,8 @@
 #include "../include/Ariphmetic.h"
 
 
-int main()
+void interface()
 {
-	for (int i = 0; i < 20; i++)
-	{
-		cout << "-";
-	}
-	cout << "\nWelcome to Ariphmetic Expressions calculator\n";
-	cout << "It support: integer numbers, operations '+', '-', '*', '/', and brackets\n";
 	Expression exp = GetExpr();
 	while (true)
 	{
@@ -23,7 +17,31 @@ int main()
 			exp = GetExpr();
 		}
 	}
-
 	cout << "\nANSWER\n" << exp << " = " << GetAnswer(exp);
+}
+
+
+int main()
+{
+	for (int i = 0; i < 20; i++)
+	{
+		cout << "-";
+	}
+	cout << "\nWelcome to Ariphmetic Expressions calculator\n";
+	cout << "It support: integer and real numbers, operations '+', '-', '*', '/', and brackets\n";
+	int i = 0;
+	while (i < 1)
+	{
+		try
+		{
+			interface();
+		}
+		catch (const char* message)
+		{
+			cout << message << "\nPlease, retry\n";
+			--i;
+		}
+		i++;
+	}
 	return 0;
 }

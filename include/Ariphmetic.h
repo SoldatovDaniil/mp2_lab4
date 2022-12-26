@@ -10,7 +10,7 @@ class Expression
 public:
 	enum class priority
 	{
-		number, 
+		number,
 		brecket,
 		div_or_mul,
 		add_or_sub
@@ -75,7 +75,7 @@ public:
 	vector<pair<string, priority>> data;
 
 	Expression() = default;
-	
+
 	Expression(const string& str)
 	{
 		for (int i = 0; i < str.size(); i++)
@@ -153,7 +153,7 @@ public:
 				{
 					status = statusCheck::w_operator;
 				}
-				else if (data[i].first == "(") 
+				else if (data[i].first == "(")
 				{
 					status = statusCheck::w_number;
 					breck_count++;
@@ -162,7 +162,7 @@ public:
 			case Expression::statusCheck::w_number:
 				if (data[i].second == priority::number)
 				{
-					status = statusCheck::w_operator_or_close_bracket; 
+					status = statusCheck::w_operator_or_close_bracket;
 				}
 				else
 				{
@@ -182,7 +182,7 @@ public:
 			case Expression::statusCheck::w_number_or_open_bracket:
 				if (data[i].second == priority::number)
 				{
-					status = statusCheck::w_operator_or_close_bracket; 
+					status = statusCheck::w_operator_or_close_bracket;
 				}
 				else if (data[i].first == "(")
 				{
@@ -216,6 +216,10 @@ public:
 			}
 		}
 
+		if (status == statusCheck::erorr)
+		{
+			return false;
+		}
 		if (status == statusCheck::w_number_or_open_bracket)
 		{
 			return false;
@@ -227,7 +231,7 @@ public:
 		return false;
 	}
 
-	int size() 
+	int size()
 	{
 		return data.size();
 	}
@@ -235,7 +239,7 @@ public:
 	friend ostream& operator<<(ostream& out, const Expression& expres)
 	{
 		cout << "\nExpression: \n";
-		for (int i = 0; i < expres.data.size(); i++) 
+		for (int i = 0; i < expres.data.size(); i++)
 		{
 			pair<string, priority> tmp = expres.data[i];
 			out << tmp.first;
@@ -283,9 +287,9 @@ public:
 				}
 				tmpStack.pop();
 			}
-			else if (express.data[i].second == priority::add_or_sub || express.data[i].second == priority::div_or_mul) 
+			else if (express.data[i].second == priority::add_or_sub || express.data[i].second == priority::div_or_mul)
 			{
-				while (!tmpStack.empty() && ((express.data[i].second == priority::add_or_sub && (tmpStack.top().second == priority::add_or_sub || tmpStack.top().second == priority::div_or_mul)) || (express.data[i].second == priority::div_or_mul && tmpStack.top().second == priority::div_or_mul))) 
+				while (!tmpStack.empty() && ((express.data[i].second == priority::add_or_sub && (tmpStack.top().second == priority::add_or_sub || tmpStack.top().second == priority::div_or_mul)) || (express.data[i].second == priority::div_or_mul && tmpStack.top().second == priority::div_or_mul)))
 				{
 					polish.push_back(tmpStack.top());
 					tmpStack.pop();
@@ -303,12 +307,12 @@ public:
 		return polish;
 	}
 
-	string perform() 
-	{	
+	string perform()
+	{
 		stack<pair<string, priority>> tmpStack;
-		for (int i = 0; i < polish.size(); i++) 
+		for (int i = 0; i < polish.size(); i++)
 		{
-			if (polish[i].second == priority::number) 
+			if (polish[i].second == priority::number)
 			{
 				tmpStack.push(polish[i]);
 			}
@@ -351,12 +355,11 @@ public:
 					tmpStack.push(make_pair(to_string(lOper / rOper), priority::add_or_sub));
 				}
 			}
-			
 		}
 		return tmpStack.top().first;
 	}
 
-	string polishToString() 
+	string polishToString()
 	{
 		string tmp = "";
 		for (int i = 0; i < polish.size(); i++)
@@ -388,5 +391,8 @@ Expression GetExpr()
 	Expression expr(str);
 	return expr;
 }
+
+
+
 
 
